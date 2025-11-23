@@ -1,10 +1,6 @@
 // =============================================
 // DATOS DE CIUDADES DE MENDOZA POR ZONA
 // =============================================
-/**
- * Mapa de ciudades de Mendoza con sus coordenadas geográficas
- * Agrupadas por zonas climáticas
- */
 const ciudadesMendoza = {
     "norte": [
         { nombre: "Mendoza Capital", lat: -32.8908, lng: -68.8272 },
@@ -35,13 +31,8 @@ const ciudadesMendoza = {
 };
 
 // =============================================
-// FUNCIÓN HELPER: SEGURIDAD CONTRA INYECCIÓN HTML
+// FUNCIÓN: ESCAPAR HTML
 // =============================================
-/**
- * Convierte caracteres especiales en entidades HTML para prevenir XSS
- * @param {string} str - Texto a escapar
- * @returns {string} Texto seguro para insertar en HTML
- */
 function escapeHtml(str) {
     if (!str) return "";
     return String(str)
@@ -53,13 +44,8 @@ function escapeHtml(str) {
 }
 
 // =============================================
-// FUNCIÓN: OBTENER ICONO DEL CLIMA SEGÚN CÓDIGO
+// ICONO SEGÚN CÓDIGO
 // =============================================
-/**
- * Convierte el código meteorológico de Open-Meteo en un icono visual
- * @param {number} codigoClima - Código numérico del clima
- * @returns {string} Emoji representativo del estado climático
- */
 function obtenerIconoClima(codigoClima) {
     if (codigoClima === 0) return "☀️";
     if (codigoClima >= 1 && codigoClima <= 3) return "🌤️";
@@ -72,13 +58,8 @@ function obtenerIconoClima(codigoClima) {
 }
 
 // =============================================
-// FUNCIÓN: OBTENER DESCRIPCIÓN DEL CLIMA
+// DESCRIPCIÓN SEGÚN CÓDIGO
 // =============================================
-/**
- * Convierte el código meteorológico en texto descriptivo
- * @param {number} codigoClima - Código numérico del clima
- * @returns {string} Descripción en español del estado climático
- */
 function obtenerDescripcionClima(codigoClima) {
     const descripciones = {
         0: "Despejado", 1: "Mayormente despejado", 2: "Parcialmente nublado", 3: "Nublado",
@@ -92,14 +73,8 @@ function obtenerDescripcionClima(codigoClima) {
 }
 
 // =============================================
-// FUNCIÓN: CREAR CARD DE CLIMA PARA UNA CIUDAD
+// CARD DE CLIMA
 // =============================================
-/**
- * Genera el HTML para una card de clima Bootstrap
- * @param {string} nombreCiudad - Nombre de la ciudad
- * @param {Object} datosClima - Datos meteorológicos de la API
- * @returns {string} HTML de la card lista para insertar
- */
 function crearCardClima(nombreCiudad, datosClima) {
     const currentWeather = datosClima.weather?.current_weather || datosClima.current_weather;
 
@@ -148,36 +123,23 @@ function crearCardClima(nombreCiudad, datosClima) {
 }
 
 // =============================================
-// FUNCIÓN PRINCIPAL: CARGAR CLIMA POR ZONA
+// CARGAR CLIMA POR ZONA
 // =============================================
-/**
- * Carga y muestra datos climáticos de una zona específica de Mendoza
- * @param {string} zona - Zona climática ('norte', 'centro', 'sur', 'este', 'todas')
- * @returns {Promise<void>}
- */
 async function cargarClima(zona) {
     const container = document.getElementById("clima-container");
 
     try {
-        // MOSTRAR LOADING
         container.innerHTML = `
             <div class="col-12 text-center py-5">
-                <div class="spinner-border text-info" role="status">
-                    <span class="visually-hidden">Consultando meteorología...</span>
-                </div>
+                <div class="spinner-border text-info"></div>
                 <p class="mt-2 text-muted">Cargando clima para zona ${zona}...</p>
             </div>
         `;
 
-        // OBTENER CIUDADES DE LA ZONA
-        let ciudades = [];
-        if (zona === "todas") {
-            ciudades = Object.values(ciudadesMendoza).flat();
-        } else {
-            ciudades = ciudadesMendoza[zona] || [];
-        }
+        let ciudades = zona === "todas"
+            ? Object.values(ciudadesMendoza).flat()
+            : ciudadesMendoza[zona] || [];
 
-        // VERIFICAR SI HAY CIUDADES
         if (ciudades.length === 0) {
             container.innerHTML = `
                 <div class="col-12 text-center py-5">
@@ -190,12 +152,10 @@ async function cargarClima(zona) {
             return;
         }
 
-        // LIMPIAR CONTENEDOR
         container.innerHTML = '';
 
-        // CARGAR DATOS EN PARALELO
         const promesasClima = ciudades.map(ciudad => {
-            return fetch(`http://localhost:5000/api/meteo/coords?lat=${ciudad.lat}&lon=${ciudad.lng}`)
+            return fetch(`https://nimbus-mvp.onrender.com/api/meteo/coords?lat=${ciudad.lat}&lon=${ciudad.lng}`)
                 .then(res => {
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     return res.json();
@@ -206,7 +166,6 @@ async function cargarClima(zona) {
 
         const resultados = await Promise.all(promesasClima);
 
-        // PROCESAR RESULTADOS
         resultados.forEach(resultado => {
             if (resultado.error) {
                 container.innerHTML += `
@@ -228,13 +187,14 @@ async function cargarClima(zona) {
             }
         });
 
-        // ACTUALIZAR INTERFAZ
-        const tituloZona = zona === "todas" ? "Todas las Zonas" : `Zona ${zona.charAt(0).toUpperCase() + zona.slice(1)}`;
+        const tituloZona = zona === "todas"
+            ? "Todas las Zonas"
+            : `Zona ${zona.charAt(0).toUpperCase() + zona.slice(1)}`;
+
         document.getElementById('subtitulo-zona').textContent = `Clima en ${tituloZona}`;
         actualizarZonaActiva(zona);
 
     } catch (error) {
-        console.error("Error general cargando clima:", error);
         container.innerHTML = `
             <div class="col-12 text-center py-5">
                 <div class="alert alert-danger">
@@ -248,19 +208,13 @@ async function cargarClima(zona) {
 }
 
 // =============================================
-// FUNCIÓN: CARGAR CLIMA DE UBICACIÓN POR IP
+// CARGAR UBICACIÓN POR IP
 // =============================================
-/**
- * Carga y muestra el clima de la ubicación actual del usuario mediante IP
- * @returns {Promise<void>}
- */
 async function cargarUbicacionIP() {
     const container = document.getElementById("ubicacion-container");
 
     try {
-        // EL SPINNER YA ESTÁ EN EL HTML, NO HACER NADA
-
-        const res = await fetch('http://localhost:5000/api/meteo/ip');
+        const res = await fetch("https://nimbus-mvp.onrender.com/api/meteo/ip");
         if (!res.ok) throw new Error(`Error: ${res.status}`);
 
         const data = await res.json();
@@ -269,9 +223,8 @@ async function cargarUbicacionIP() {
 
         if (!currentWeather) throw new Error("No hay datos de clima");
 
-        // USAR LA NUEVA ESTRUCTURA COMPACTA
         container.innerHTML = `
-                <div class="card h-100 shadow-sm" style="max-height: 300px;">
+            <div class="card h-100 shadow-sm" style="max-height: 300px;">
                 <div class="card-header bg-primary text-white py-2">
                     <h5 class="card-title mb-0 fs-6">📍 Mi Ubicación</h5>
                 </div>
@@ -313,13 +266,14 @@ async function cargarUbicacionIP() {
         `;
     }
 }
+
 // =============================================
-// FUNCIÓN: ACTUALIZAR ZONA ACTIVA EN LA INTERFAZ
+// MARCAR ZONA ACTIVA
 // =============================================
 function actualizarZonaActiva(zonaActiva) {
-    document.querySelectorAll('nav a').forEach(enlace => {
-        enlace.classList.remove('active');
-    });
+    document.querySelectorAll('nav a').forEach(enlace =>
+        enlace.classList.remove('active', 'fw-bold')
+    );
 
     const enlaceActivo = document.querySelector(`nav a[data-zona="${zonaActiva}"]`);
     if (enlaceActivo) {
@@ -328,23 +282,16 @@ function actualizarZonaActiva(zonaActiva) {
 }
 
 // =============================================
-// CONFIGURACIÓN DE EVENTOS AL CARGAR LA PÁGINA
+// EVENTOS AL CARGAR PÁGINA
 // =============================================
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("🌤️ Nimbus Clima - Página cargada correctamente");
-
     cargarUbicacionIP();
     cargarClima('norte');
 
     document.querySelectorAll('nav a[data-zona]').forEach(enlace => {
         enlace.addEventListener('click', (event) => {
-            if (enlace.hasAttribute('data-zona')) {
-                event.preventDefault();
-                const zona = enlace.getAttribute('data-zona');
-                cargarClima(zona);
-            }
+            event.preventDefault();
+            cargarClima(enlace.getAttribute('data-zona'));
         });
     });
-
-    console.log("✅ Event listeners configurados correctamente");
 });

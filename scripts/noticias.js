@@ -1,11 +1,15 @@
 // =============================================
-// FUNCIÓN HELPER: SEGURIDAD CONTRA INYECCIÓN HTML
+// CONFIG: SELECCIÓN AUTOMÁTICA DE API BASE URL
 // =============================================
-/**
- * Convierte caracteres especiales en entidades HTML para prevenir XSS
- * @param {string} str - Texto a escapar
- * @returns {string} Texto seguro para insertar en HTML
- */
+const API_BASE =
+  window.location.hostname.includes("render") ||
+  window.location.hostname.includes("onrender")
+    ? "https://nimbus-mvp.onrender.com"
+    : "http://localhost:5000";
+
+// =============================================
+// FUNCIÓN HELPER: PREVENIR INYECCIÓN HTML
+// =============================================
 function escapeHtml(str) {
   if (!str) return "";
   return String(str)
@@ -17,153 +21,124 @@ function escapeHtml(str) {
 }
 
 // =============================================
-// FUNCIÓN PRINCIPAL: CARGAR NOTICIAS POR CATEGORÍA
+// FUNCIÓN PRINCIPAL: CARGAR NOTICIAS
 // =============================================
-/**
- * Carga y muestra noticias de una categoría específica desde la API
- * @param {string} categoria - Categoría de noticias ('general', 'deportes', 'clima')
- */
-async function cargarNoticias(categoria = 'general') {
-  // 1. OBTENER CONTENEDOR DONDE SE MOSTRARÁN LAS NOTICIAS
+async function cargarNoticias(categoria = "general") {
   const noticiasContainer = document.getElementById("noticias-container");
-  
+
   try {
-    // 2. MOSTRAR INDICADOR DE CARGA (FEEDBACK VISUAL)
     noticiasContainer.innerHTML = `
       <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Cargando noticias...</span>
-        </div>
+        <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-2 text-muted">Cargando noticias de ${categoria}...</p>
       </div>
     `;
-    
-    // 3. HACER PETICIÓN A LA API (URL DINÁMICA SEGÚN CATEGORÍA)
-    const res = await fetch(`http://localhost:5000/api/noticias/${categoria}`);
-    
-    // 4. VERIFICAR SI LA RESPUESTA ES EXITOSA
-    if (!res.ok) {
-      throw new Error(`Error en la API: ${res.status} - ${res.statusText}`);
-    }
-    
-    // 5. CONVERTIR RESPUESTA A JSON
+
+    // 👉 URL dinámico para Render / Localhost
+    const res = await fetch(`${API_BASE}/api/noticias/${categoria}`);
+
+    if (!res.ok) throw new Error(`Error API: ${res.status}`);
+
     const data = await res.json();
-    
-    // 6. LIMPIAR CONTENEDOR ANTES DE AGREGAR NUEVAS NOTICIAS
-    noticiasContainer.innerHTML = '';
-    
-    // 7. VERIFICAR SI HAY NOTICIAS DISPONIBLES
-    if (data.noticias && data.noticias.length > 0) {
-      // 8. CREAR UNA TARJETA POR CADA NOTICIA
-      data.noticias.forEach((noticia, index) => {
-        const col = document.createElement("div");
-        col.className = "col-12 col-md-6 col-lg-4 mb-4"; // Responsive grid
-        
-        // 9. PLANTILLA HTML PARA CADA NOTICIA
-        col.innerHTML = `
-          <div class="card h-100 shadow-sm hover-shadow">
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title text-primary">${escapeHtml(noticia.titulo)}</h5>
-              <p class="card-text flex-grow-1 text-muted">${escapeHtml(noticia.descripcion)}</p>
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center">
-                  <small class="text-muted">
-                    <strong>${escapeHtml(noticia.fuente)}</strong><br>
-                    ${escapeHtml(noticia.fecha)}
-                  </small>
-                  <a href="${noticia.url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                    Leer más
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-        
-        // 10. AGREGAR LA NOTICIA AL CONTENEDOR
-        noticiasContainer.appendChild(col);
-      });
-    } else {
-      // 11. MOSTRAR MENSAJE SI NO HAY NOTICIAS
+
+    noticiasContainer.innerHTML = "";
+
+    // --- Si la API devolvió error de NewsAPI ---
+    if (data.error === "API_KEY_MISSING") {
       noticiasContainer.innerHTML = `
-        <div class="col-12 text-center py-5">
+        <div class="alert alert-danger text-center py-5">
+          <h4>❌ Falta la API KEY de NewsAPI</h4>
+          <p>Configúrala en Render como variable <strong>NEWS_API_KEY</strong>.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // --- Si no hay noticias ---
+    if (!data.noticias || data.noticias.length === 0) {
+      noticiasContainer.innerHTML = `
+        <div class="text-center py-5">
           <div class="alert alert-info">
-            <h4>📰 No hay noticias disponibles</h4>
-            <p>No se encontraron noticias para la categoría <strong>${categoria}</strong>.</p>
+            <h4>📰 No hay noticias</h4>
+            <p>No se encontraron noticias para <strong>${categoria}</strong>.</p>
           </div>
         </div>
       `;
+      return;
     }
-    
-    // 12. ACTUALIZAR TÍTULO PRINCIPAL DE LA PÁGINA
-    const tituloCategoria = categoria.charAt(0).toUpperCase() + categoria.slice(1);
-    document.getElementById('titulo-principal').textContent = `Noticias ${tituloCategoria}`;
-    
-    // 13. ACTUALIZAR ESTADO ACTIVO DE LOS BOTONES DEL NAV
+
+    // --- Renderizar noticias ---
+    data.noticias.forEach((noticia) => {
+      const col = document.createElement("div");
+      col.className = "col-12 col-md-6 col-lg-4 mb-4";
+
+      col.innerHTML = `
+        <div class="card h-100 shadow-sm hover-shadow">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-primary">${escapeHtml(noticia.titulo)}</h5>
+            <p class="card-text flex-grow-1 text-muted">
+              ${escapeHtml(noticia.descripcion)}
+            </p>
+            <div class="d-flex justify-content-between align-items-center mt-auto">
+              <small class="text-muted">
+                <strong>${escapeHtml(noticia.fuente)}</strong><br>
+                ${escapeHtml(noticia.fecha)}
+              </small>
+              <a href="${noticia.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                Leer más
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      noticiasContainer.appendChild(col);
+    });
+
+    // Actualizar título
+    document.getElementById("titulo-principal").textContent =
+      `Noticias ${categoria.charAt(0).toUpperCase() + categoria.slice(1)}`;
+
     actualizarCategoriaActiva(categoria);
-    
   } catch (error) {
-    // 14. MANEJO DE ERRORES
     console.error("Error detallado:", error);
     noticiasContainer.innerHTML = `
-      <div class="col-12 text-center py-5">
-        <div class="alert alert-danger">
-          <h4>❌ Error al cargar noticias</h4>
-          <p>No se pudieron cargar las noticias. Verifica que el servidor esté ejecutándose.</p>
-          <small>Error: ${error.message}</small>
-        </div>
+      <div class="alert alert-danger text-center py-5">
+        <h4>❌ Error al cargar noticias</h4>
+        <p>No se pudieron cargar las noticias.</p>
+        <small>${error.message}</small>
       </div>
     `;
   }
 }
 
 // =============================================
-// FUNCIÓN: ACTUALIZAR CATEGORÍA ACTIVA EN EL NAV
+// NAVBAR: CATEGORÍA ACTIVA
 // =============================================
-/**
- * Resalta visualmente la categoría seleccionada en el navbar
- * @param {string} categoriaActiva - Categoría que está actualmente seleccionada
- */
 function actualizarCategoriaActiva(categoriaActiva) {
-  // 1. OBTENER TODOS LOS ENLACES DEL NAVBAR
-  const enlacesNav = document.querySelectorAll('nav a');
-  
-  // 2. REMOVER CLASE 'ACTIVA' DE TODOS LOS ENLACES
-  enlacesNav.forEach(enlace => {
-    enlace.classList.remove('active', 'fw-bold');
-  });
-  
-  // 3. AGREGAR CLASE 'ACTIVA' AL ENLACE CORRESPONDIENTE
-  const enlaceActivo = document.querySelector(`nav a[data-cat="${categoriaActiva}"]`);
-  if (enlaceActivo) {
-    enlaceActivo.classList.add('active', 'fw-bold');
-  }
+  const enlaces = document.querySelectorAll("nav a");
+
+  enlaces.forEach((e) => e.classList.remove("active", "fw-bold"));
+
+  const activo = document.querySelector(`nav a[data-cat="${categoriaActiva}"]`);
+
+  if (activo) activo.classList.add("active", "fw-bold");
 }
 
 // =============================================
-// CONFIGURACIÓN DE EVENTOS AL CARGAR LA PÁGINA
+// EVENTOS PRINCIPALES
 // =============================================
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("🚀 Nimbus News - Página cargada correctamente");
-  
-  cargarNoticias('general');
-  
-  const enlacesNav = document.querySelectorAll('nav a');
-  
-  enlacesNav.forEach(enlace => {
-      enlace.addEventListener('click', (event) => {
-          // SOLO prevenir enlaces de categorías (con data-cat)
-          if (enlace.hasAttribute('data-cat')) {
-              event.preventDefault();
-              const categoria = enlace.getAttribute('data-cat');
-              console.log(`📂 Cargando categoría: ${categoria}`);
-              cargarNoticias(categoria);
-          }
-          // Los enlaces normales (como "clima.html") navegan normalmente
-      });
-  });
+  console.log("🚀 Noticias listas. Servidor:", API_BASE);
 
-  
-  // 6. MENSAJE DE CONFIRMACIÓN EN CONSOLA
-  console.log("✅ Event listeners configurados correctamente");
+  cargarNoticias("general");
+
+  document.querySelectorAll("nav a").forEach((enlace) => {
+    enlace.addEventListener("click", (event) => {
+      if (enlace.hasAttribute("data-cat")) {
+        event.preventDefault();
+        cargarNoticias(enlace.getAttribute("data-cat"));
+      }
+    });
+  });
 });
