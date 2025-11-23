@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+    <title>Nimbus Clima</title>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Navbar de Bootstrap -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">Nimbus Clima</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <!-- Enlace a Noticias -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="./noticias.html">📰 Noticias</a>
+                    </li>
+                    <!-- Zonas Climáticas -->
+                    <li class="nav-item">
+                        <a class="nav-link fw-bolder" aria-current="page" href="#" data-zona="norte">Norte</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bolder" href="#" data-zona="centro">Centro</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bolder" href="#" data-zona="este">Este</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bolder" href="#" data-zona="sur">Sur</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-body-secondary py-3 text-center">
+        <h1 id="titulo-principal" class="fw-bold text-black mb-3">Clima en Mendoza - Nimbus AI</h1>
+    </header>
+    
+    <main class="flex-grow-1 container-fluid my-4 px-4">
+        <!-- Contenedor principal reorganizado: una fila para título y luego una fila
+             donde la columna izquierda es la ubicación y la derecha contiene las cards -->
+        <div class="row g-3 mx-0">      
+          <!-- FILA QUE CONTIENE (IZQ) UBICACIÓN y (DER) ZONA + CARDS -->
+          <div class="col-12">
+            <div class="row g-3">
+              <!-- Columna izquierda: ubicación (1/3 en md+) -->
+              <div id="ubicacion-wrapper" class="col-12 col-md-4">
+                <div id="ubicacion-container" class="h-100">
+                  <!-- NUEVA CARD COMPACTA Y ESTILIZADA -->
+                  <div class="card shadow-sm border-0 h-100" style="max-height: 300px;">
+                    <div class="card-header bg-primary text-white py-2">
+                      <h5 class="card-title mb-0 fs-6">📍 Mi Ubicación</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column p-3">
+                      <!-- CONTENIDO DINÁMICO -->
+                      <div class="text-center py-2 flex-grow-1 d-flex align-items-center justify-content-center">
+                        <div>
+                          <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                          <p class="mt-2 text-muted small mb-0">Detectando tu ubicación...</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+      
+              <!-- Columna derecha: zona + cards (ocupa 2/3 en md+) -->
+              <div class="col-12 col-md-8">
+                <h3 id="subtitulo-zona" class="mb-3">Clima en Zona Norte</h3>
+      
+                <!-- CONTENEDOR DE CARDS DE CIUDADES -->
+                <div id="clima-container" class="row g-3 mx-0">
+                  <div class="col-12 text-center py-4">
+                    <p class="text-muted">Selecciona una zona para ver el clima</p>
+                  </div>
+                </div>
+              </div>
+            </div> <!-- row interna -->
+          </div> <!-- col-12 contenedor -->
+        </div> <!-- row principal -->
+    </main>
+
+    <<!-- 🚨 Sección de Alertas - Bootstrap Puro -->
+<section id="alertas" class="container mt-5">
+  <div class="row justify-content-center">
+      <div class="col-12 col-md-10 col-lg-8">
+          <!-- Header -->
+          <div class="d-flex align-items-center mb-4">
+              <div class="bg-dark-subtle rounded-circle d-flex align-items-center justify-content-center me-3" 
+                   style="width: 45px; height: 45px;">
+                  <span class="fw-bold fs-10">⚠️</span>
+              </div>
+              <div>
+                  <h3 class="mb-1 fw-bold text-dark">Alerta de Granizo</h3>
+                  <p class="text-muted mb-0 small">Sistema de monitoreo en tiempo real</p>
+              </div>
+          </div>
+
+          <!-- Card Principal -->
+          <div id="alerta-card" class="card border-warning shadow">
+              <div class="card-header bg-warning bg-opacity-25 border-warning">
+                  <div class="d-flex justify-content-between align-items-center">
+                      <h5 class="card-title mb-0 text-dark fw-bold">
+                          Estado de Alerta
+                      </h5>
+                      <span class="badge bg-warning text-dark">ACTIVO</span>
+                  </div>
+              </div>
+              
+              <div class="card-body text-center py-4">
+                  <!-- Contenido dinámico -->
+                  <div class="py-2">
+                      <div class="spinner-border text-warning mb-3" role="status">
+                          <span class="visually-hidden">Cargando...</span>
+                      </div>
+                      <h6 class="text-warning mb-2">Analizando datos meteorológicos</h6>
+                      <p class="text-muted">Esperando datos...</p>
+                  </div>
+              </div>
+              
+              <div class="card-footer bg-light border-warning">
+                  <div class="row">
+                      <div class="col-12 text-center">
+                          <small class="text-muted">
+                              Actualizado: <span class="fw-bold">--:--</span> | 
+                              Nimbus AI
+                          </small>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</section>
+    
+
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
+        <small>© 2025 Nimbus</small>
+    </footer>
+
+    <!-- Script de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="scripts/clima.js"></script>
+    <script src="scripts/alertas.js"></script>
+</body>
+
+</html>
