@@ -4,7 +4,7 @@
 const API_BASE =
   window.location.hostname.includes("render") ||
   window.location.hostname.includes("onrender") ||
-  window.location.hostname.includes("vercel")
+  window.location.hostname.includes("vercel.app")
     ? "https://nimbus-mvp.onrender.com"
     : "http://localhost:5000";
 
@@ -44,7 +44,7 @@ async function cargarNoticias(categoria = "general") {
 
     noticiasContainer.innerHTML = "";
 
-    // --- Si la API devolvió error de NewsAPI ---
+    // --- Si falta la API KEY ---
     if (data.error === "API_KEY_MISSING") {
       noticiasContainer.innerHTML = `
         <div class="alert alert-danger text-center py-5">
@@ -96,11 +96,12 @@ async function cargarNoticias(categoria = "general") {
       noticiasContainer.appendChild(col);
     });
 
-    // Actualizar título
+    // Actualizar título principal
     document.getElementById("titulo-principal").textContent =
       `Noticias ${categoria.charAt(0).toUpperCase() + categoria.slice(1)}`;
 
     actualizarCategoriaActiva(categoria);
+
   } catch (error) {
     console.error("Error detallado:", error);
     noticiasContainer.innerHTML = `
