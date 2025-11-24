@@ -3,7 +3,8 @@
 // =============================================
 const API_BASE =
   window.location.hostname.includes("render") ||
-  window.location.hostname.includes("onrender")
+  window.location.hostname.includes("onrender") ||
+  window.location.hostname.includes("vercel")
     ? "https://nimbus-mvp.onrender.com"
     : "http://localhost:5000";
 
@@ -34,7 +35,7 @@ async function cargarNoticias(categoria = "general") {
       </div>
     `;
 
-    // 👉 URL dinámico para Render / Localhost
+    // 👉 URL dinámico para Render / Localhost / Vercel
     const res = await fetch(`${API_BASE}/api/noticias/${categoria}`);
 
     if (!res.ok) throw new Error(`Error API: ${res.status}`);
